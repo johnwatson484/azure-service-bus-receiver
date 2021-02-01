@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  azure-service-bus-receiver:
+    build:
+      context: .
+      target: production
+    image: azure-service-bus-receiver
+    container_name: azure-service-bus-receiver
+    environment:
+      ServiceBusConfig__Host: ${AZURE_SERVICE_BUS_HOST}
+      ServiceBusConfig__Username: ${AZURE_SERVICE_BUS_USERNAME}
+      ServiceBusConfig__Password: ${AZURE_SERVICE_BUS_PASSWORD}

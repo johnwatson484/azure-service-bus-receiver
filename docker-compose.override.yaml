@@ -1,0 +1,7 @@
+version: '3.7'
+services:
+  azure-service-bus-receiver:
+    build:
+      target: development
+    volumes:
+      - ./AzureServiceBusReceiver:/home/dotnet/AzureServiceBusReceiver
