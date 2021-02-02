@@ -21,11 +21,17 @@ namespace AzureServiceBusSender
         {
             await using var client = new ServiceBusClient(connectionString);
 
-            await using var queueProcessor = client.CreateProcessor(config.Queue);
+            var options = new ServiceBusProcessorOptions
+            {
+                AutoCompleteMessages = false
+            };
+
+            await using var queueProcessor = client.CreateProcessor(config.Queue, options);
             queueProcessor.ProcessMessageAsync += MessageHandler;
             queueProcessor.ProcessErrorAsync += ErrorHandler;
 
-            await using var subscriptionProcessor = client.CreateProcessor(config.Topic, config.Subscription);
+
+            await using var subscriptionProcessor = client.CreateProcessor(config.Topic, config.Subscription, options);
             subscriptionProcessor.ProcessMessageAsync += MessageHandler;
             subscriptionProcessor.ProcessErrorAsync += ErrorHandler;
 
@@ -43,11 +49,19 @@ namespace AzureServiceBusSender
             return $"Endpoint=sb://{config.Host}/;SharedAccessKeyName={config.Username};SharedAccessKey={config.Password}";
         }
 
-        private Task MessageHandler(ProcessMessageEventArgs args)
+        private async Task MessageHandler(ProcessMessageEventArgs args)
         {
             string body = args.Message.Body.ToString();
-            Console.WriteLine($"Message received - {body}");
-            return Task.CompletedTask;
+            try
+            {
+                Console.WriteLine($"Message received - {body}");
+                await args.CompleteMessageAsync(args.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unable to process message {ex}");
+                await args.AbandonMessageAsync(args.Message);
+            }
         }
 
         private Task ErrorHandler(ProcessErrorEventArgs args)
